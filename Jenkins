@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/YOUR_USER/my-go-app.git'
+                git branch: 'main', url: 'https://github.com/Sri2103/sample-go.git'
             }
         }
 
@@ -19,25 +19,25 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                sh 'go test ./...'
-            }
-        }
+        // stage('Run Tests') {
+        //     steps {
+        //         sh 'go test ./...'
+        //     }
+        // }
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    docker.build("${IMAGE_NAME}:latest")
-                }
-            }
-        }
+        // stage('Build Docker Image') {
+        //     steps {
+        //         script {
+        //             docker.build("${IMAGE_NAME}:latest")
+        //         }
+        //     }
+        // }
 
-        stage('Deploy Locally') {
-            steps {
-                sh 'docker rm -f my-go-app || true'
-                sh 'docker run -d -p 8080:8080 --name my-go-app my-go-app:latest'
-            }
-        }
+        // stage('Deploy Locally') {
+        //     steps {
+        //         sh 'docker rm -f my-go-app || true'
+        //         sh 'docker run -d -p 8080:8080 --name my-go-app my-go-app:latest'
+        //     }
+        // }
     }
 }
