@@ -1,5 +1,11 @@
 pipeline {
-    agent any
+
+    agent {
+
+     docker {
+            image 'golang:1.23.4'
+        }
+    }
 
     environment {
         IMAGE_NAME = "my-go-app"
