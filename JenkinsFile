@@ -5,7 +5,7 @@ pipeline {
         IMAGE_NAME = "my-go-app"
     }
 
-    tools { go "1.23"}
+    tools { go "1.23.4"}
     
 
     stages {
