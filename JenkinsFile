@@ -18,8 +18,8 @@ pipeline {
         stage('Build Go App') {
             steps {
                 sh 'go version'
-                // sh 'go mod tidy'
-                // sh 'go build -o myapp'
+                sh 'go mod tidy'
+                sh 'go build -o myapp'
             }
         }
 
