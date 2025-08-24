@@ -1,14 +1,11 @@
 pipeline {
 
-    agent  {
-        docker {
-            image 'golang:latest'
-        }
-    }
+    agent  any
     environment {
         IMAGE_NAME = "my-go-app"
     }
 
+    tools { go "1.23"}
     
 
     stages {
@@ -21,8 +18,8 @@ pipeline {
         stage('Build Go App') {
             steps {
                 sh 'go version'
-                sh 'go mod tidy'
-                sh 'go build -o myapp'
+                // sh 'go mod tidy'
+                // sh 'go build -o myapp'
             }
         }
 
