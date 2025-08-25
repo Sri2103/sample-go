@@ -1,12 +1,13 @@
 pipeline {
-
     agent any
+
     environment {
         IMAGE_NAME = "my-go-app"
     }
 
-    tools { go "1.23.4"}
-    
+    tools { 
+        go "1.23.4"
+    }
 
     stages {
         stage('Checkout') {
@@ -23,7 +24,7 @@ pipeline {
             }
         }
 
-        stage('Check Docker agent Access ') {
+        stage('Check Docker agent Access') {
             agent {
                 docker {
                     image 'docker:25'
@@ -34,27 +35,26 @@ pipeline {
                 sh 'docker version'
             }
         }
+
+        stage('Run Tests') {
+            steps {
+                sh 'go test ./...'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${IMAGE_NAME}:latest")
+                }
+            }
+        }
+
+        stage('Deploy Locally') {
+            steps {
+                sh 'docker rm -f my-go-app || true'
+                sh 'docker run -d -p 8080:8080 --name my-go-app my-go-app:latest'
+            }
+        }
     }
-
-        // stage('Run Tests') {
-        //     steps {
-        //         sh 'go test ./...'
-        //     }
-        // }
-
-        // stage('Build Docker Image') {
-        //     steps {
-        //         script {
-        //             docker.build("${IMAGE_NAME}:latest")
-        //         }
-        //     }
-        // }
-
-        // stage('Deploy Locally') {
-        //     steps {
-        //         sh 'docker rm -f my-go-app || true'
-        //         sh 'docker run -d -p 8080:8080 --name my-go-app my-go-app:latest'
-        //     }
-        // }
 }
-
