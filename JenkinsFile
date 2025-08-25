@@ -1,6 +1,5 @@
 pipeline {
 
-    agent  any
     environment {
         IMAGE_NAME = "my-go-app"
     }
@@ -23,11 +22,15 @@ pipeline {
             }
         }
 
-         stage('Check Docker Access') {
-            steps {
-                docker.image('docker:25.0'){
-                    sh 'docker ps'
+        stage('Check Docker agent Access ') {
+            agent {
+                docker {
+                    image 'docker:25'
+                    args '-e DOCKER_HOST=tcp://host.docker.interanl:2375'
                 }
+            }
+            steps {
+                sh 'docker version'
             }
         }
     }
