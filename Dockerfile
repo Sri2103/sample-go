@@ -8,5 +8,5 @@ RUN go mod tidy && go build -o myapp
 FROM debian:bullseye-slim
 WORKDIR /root/
 COPY --from=builder /app/myapp .
-EXPOSE 8080
+EXPOSE 8500
 CMD ["./myapp"]
