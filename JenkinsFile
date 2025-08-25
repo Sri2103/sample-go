@@ -5,10 +5,6 @@ pipeline {
         IMAGE_NAME = "my-go-app"
     }
 
-    tools { 
-        go "1.23.4"
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -17,6 +13,12 @@ pipeline {
         }
 
         stage('Build Go App') {
+
+            agent {
+                image 'golang:1.23.4'
+                args '-e DOCKER_HOST=tcp://host.docker.internal:2375'
+            }
+
             steps {
                 sh 'go version'
                 sh 'go mod tidy'
