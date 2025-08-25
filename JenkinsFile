@@ -27,7 +27,7 @@ pipeline {
             agent {
                 docker {
                     image 'docker:25'
-                    args '-e DOCKER_HOST=tcp://host.docker.interanl:2375'
+                    args '-e DOCKER_HOST=tcp://host.docker.internal:2375'
                 }
             }
             steps {
