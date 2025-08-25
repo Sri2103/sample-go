@@ -3,10 +3,12 @@ FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download
+# COPY go.mod go.sum ./
+# RUN go mod download
 
 COPY . .
+RUN go mod download
+
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o myapp .
 
@@ -16,5 +18,7 @@ FROM alpine:latest
 WORKDIR /app
 
 COPY --from=builder /app/myapp .
+
+EXPOSE 8500
 
 CMD ["./myapp"]
