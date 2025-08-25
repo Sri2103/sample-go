@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "my-go-app"
+        HOME = "${WORKSPACE}"
     }
 
     stages {
@@ -21,7 +22,7 @@ pipeline {
           }
         
         }
-        
+
         environment {
             GOCACHE = '/tmp/go-cache'
         }
