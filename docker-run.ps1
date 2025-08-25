@@ -11,6 +11,7 @@ $exists = docker ps -a --format "{{.Names}}" | Select-String $containerName
 
 if ($exists) {
     Write-Host "Container $containerName already exists. Removing..."
+    docker stop $containerName
     docker rm -f $containerName
 }
 
@@ -19,8 +20,8 @@ docker run -d `
     --name $containerName `
     -p ${jenkinsPort}:8080 -p ${agentPort}:50000 `
     -v ${jenkinsHome}:/var/jenkins_home `
-    -v /var/run/docker.sock:/var/run/docker.sock `
-    jenkins/jenkins:lts
+    -e DOCKER_HOST=tcp://host.docker.internal:2375 `
+    jenkins:local
 
 Write-Host "Jenkins is starting..."
 Write-Host "Open http://localhost:$jenkinsPort to access Jenkins"
