@@ -35,17 +35,14 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            agent {
-                docker {
-                    image 'docker:25'
-                    args '-e DOCKER_HOST=tcp://host.docker.internal:2375'
-                }
-            }
+      
             steps {
                 script {
                     // This Dockerfile does the real build (multi-stage)
                     docker.build("${IMAGE_NAME}:latest")
                 }
+
+                sh 'docker build -t ${IMAGE_NAME}:latest .'
             }
         }
 
