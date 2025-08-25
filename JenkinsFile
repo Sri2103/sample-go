@@ -12,21 +12,22 @@ pipeline {
             }
         }
 
-        stage('Build Go App') {
-
+        stage('Go Build & Test') {
             agent {
-                image 'golang:1.23.4'
-                args '-e DOCKER_HOST=tcp://host.docker.internal:2375'
+                docker {
+                    image 'golang:1.23'
+                    args '-v $PWD:/app -w /app'
+                }
             }
-
             steps {
                 sh 'go version'
                 sh 'go mod tidy'
-                sh 'go build -o myapp'
+                sh 'go build -o myapp'   // local build for testing only
+                sh 'go test ./...'
             }
         }
 
-        stage('Check Docker agent Access') {
+        stage('Build Docker Image') {
             agent {
                 docker {
                     image 'docker:25'
@@ -34,19 +35,8 @@ pipeline {
                 }
             }
             steps {
-                sh 'docker version'
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                sh 'go test ./...'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
                 script {
+                    // This Dockerfile does the real build (multi-stage)
                     docker.build("${IMAGE_NAME}:latest")
                 }
             }
@@ -55,7 +45,7 @@ pipeline {
         stage('Deploy Locally') {
             steps {
                 sh 'docker rm -f my-go-app || true'
-                sh 'docker run -d -p 8500:8500 --name my-go-app my-go-app:latest'
+                sh 'docker run -d -p 8080:8080 --name my-go-app my-go-app:latest'
             }
         }
     }
