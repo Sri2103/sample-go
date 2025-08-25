@@ -13,12 +13,18 @@ pipeline {
         }
 
         stage('Go Build & Test') {
-            agent {
-                docker {
-                    image 'golang:1.23.4'
-                    args '-v $PWD:/app -w /app'
-                }
-            }
+            
+        agent {
+          docker {
+            image 'golang:1.23'
+            args '-v $PWD:/app -w /app'
+          }
+        
+        }
+        
+        environment {
+            GOCACHE = '/tmp/go-cache'
+        }
             steps {
                 sh 'go version'
                 sh 'go mod tidy'
