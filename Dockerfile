@@ -5,7 +5,7 @@ COPY . .
 RUN go mod tidy && go build -o myapp
 
 # Step 2: Run
-FROM debian:bullseye-slim
+FROM alpine:latest
 WORKDIR /root/
 COPY --from=builder /app/myapp .
 EXPOSE 8500
