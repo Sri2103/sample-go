@@ -15,7 +15,7 @@ pipeline {
         stage('Go Build & Test') {
             agent {
                 docker {
-                    image 'golang:1.23'
+                    image 'golang:1.23.4'
                     args '-v $PWD:/app -w /app'
                 }
             }
