@@ -1,12 +1,20 @@
-# Step 1: Build
-FROM golang:1.23.4 as builder
-WORKDIR /app
-COPY . .
-RUN go mod tidy && go build -o myapp
+# Stage 1: Builder
+FROM golang:1.23-alpine AS builder
 
-# Step 2: Run
-FROM alpine:latest
 WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o myapp .
+
+# Stage 2: Runner
+FROM alpine:latest
+
+WORKDIR /app
+
 COPY --from=builder /app/myapp .
-EXPOSE 8500
+
 CMD ["./myapp"]
