@@ -52,7 +52,7 @@ pipeline {
         stage('Deploy Locally') {
             steps {
                 sh 'docker rm -f my-go-app || true'
-                sh 'docker run -d -p 8080:8080 --name my-go-app my-go-app:latest'
+                sh 'docker run -d -p 8500:8500 --name my-go-app my-go-app:latest'
             }
         }
     }
