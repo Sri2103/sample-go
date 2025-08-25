@@ -7,11 +7,11 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/Sri2103/sample-go.git'
-            }
-        }
+        // stage('Checkout') {
+        //     steps {
+        //         git branch: 'main', url: 'https://github.com/Sri2103/sample-go.git'
+        //     }
+        // }
 
         stage('Go Build & Test') {
             
