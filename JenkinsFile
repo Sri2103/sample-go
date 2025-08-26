@@ -51,18 +51,16 @@ pipeline {
             steps {
                 sh 'go version'
                 sh 'go install github.com/jstemmer/go-junit-report@latest'
-                sh 'go install github.com/t-yuki/gocover-cobertura@latest'
 
                 sh 'go mod tidy'
                 sh 'go test -v -coverprofile=coverage.out ./... | go-junit-report > report.xml'
                 sh 'go tool cover -html=coverage.out -o coverage.html'
-                sh 'gocover-cobertura < coverage.out > coverage.xml'
             }
             post {
                 always {
                     junit 'report.xml'
                    // cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
-                    archiveArtifacts artifacts: 'coverage.out, coverage.html , coverage.xml', fingerprint: true
+                    archiveArtifacts artifacts: 'coverage.out, coverage.html, report.xml', fingerprint: true
                 }
             }
         }
