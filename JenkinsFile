@@ -34,7 +34,7 @@ pipeline {
                 sh 'go mod tidy'
                // sh 'go build -o myapp'   // local build for testing only
                 // sh 'go test -v ./... | go-junit-report > report.xml'
-                sh 'go test -coverprofile=coverage.out ./... | go-junit-report > report.xml'
+                sh 'go test -v -coverprofile=coverage.out ./... | go-junit-report > report.xml'
                 sh 'go tool cover -html=coverage.out -o coverage.html'
             }
             post {
