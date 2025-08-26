@@ -89,11 +89,7 @@ pipeline {
             script {
                 def scannerHome = tool 'SonarScanner'
                 sh """
-                "${scannerHome}/bin/sonar-scanner" \
-                    -Dsonar.projectKey=my-go-app \
-                    -Dsonar.projectName='My Go App'\
-                    -Dsonar.sources=.\
-                    -Dsonar.go.coverage.reportPaths=coverage.out
+                "${scannerHome}/bin/sonar-scanner" 
                 """
             }
             }
