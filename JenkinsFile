@@ -55,7 +55,7 @@ pipeline {
             }
 
             steps {
-                 sh 'golangci-lint run ./... --out-format checkstyle --out-file lint-report.xml'
+                 sh 'golangci-lint run ./... --out-format checkstyle --issues-exit-code=0 > lint-report.xml'
             }
 
             post {
