@@ -40,7 +40,7 @@ pipeline {
             post {
                 always {
                     junit 'report.xml'
-                    cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
+                    //cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
                     archiveArtifacts artifacts: 'coverage.out, coverage.html', fingerprint: true
                 }
             }
