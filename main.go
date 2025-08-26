@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -59,5 +60,8 @@ func main() {
 
 	http.HandleFunc("/ip", GetHome)
 
-	http.ListenAndServe(":8500", nil)
+	err := http.ListenAndServe(":8500", nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
