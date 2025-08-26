@@ -56,11 +56,14 @@ func GetHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", handler)
 
-	http.HandleFunc("/ip", GetHome)
+	mux := http.NewServeMux()
 
-	err := http.ListenAndServe(":8500", nil)
+	mux.HandleFunc("/", handler)
+
+	mux.HandleFunc("/ip", GetHome)
+
+	err := http.ListenAndServe(":8500", mux)
 	if err != nil {
 		log.Fatal(err)
 	}
