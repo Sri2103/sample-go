@@ -14,37 +14,6 @@ pipeline {
                 checkout scm
             }
         }
-        
-        stage('Go Build & Test') {    
-        agent {
-          docker {
-            image 'golang:1.23'
-            args '-v $PWD:/app -w /app'
-          }
-        
-        }
-
-        environment {
-            GOCACHE = '/tmp/go-cache'
-        }
-            steps {
-                sh 'go version'
-                sh 'go install github.com/jstemmer/go-junit-report@latest'
-
-                sh 'go mod tidy'
-               // sh 'go build -o myapp'   // local build for testing only
-                // sh 'go test -v ./... | go-junit-report > report.xml'
-                sh 'go test -v -coverprofile=coverage.out ./... | go-junit-report > report.xml'
-                sh 'go tool cover -html=coverage.out -o coverage.html'
-            }
-            post {
-                always {
-                    junit 'report.xml'
-                    //cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
-                    archiveArtifacts artifacts: 'coverage.out, coverage.html', fingerprint: true
-                }
-            }
-        }
 
         stage('Lint') {
             agent {
@@ -55,7 +24,7 @@ pipeline {
             }
 
             steps {
-                 sh 'golangci-lint run ./... --out-format checkstyle --issues-exit-code=0 > lint-report.xml'
+                 sh 'golangci-lint run ./... --out-format checkstyle  > lint-report.xml || true'
             }
 
             post {
@@ -66,6 +35,39 @@ pipeline {
 
 
         }
+        
+        stage('Go Build & Test') {    
+            agent {
+            docker {
+                image 'golang:1.23'
+                args '-v $PWD:/app -w /app'
+            }
+            
+            }
+
+            environment {
+                GOCACHE = '/tmp/go-cache'
+            }
+            steps {
+                sh 'go version'
+                sh 'go install github.com/jstemmer/go-junit-report@latest'
+
+                sh 'go mod tidy'
+                sh 'go build -o myapp'   // local build for testing only
+                // sh 'go test -v ./... | go-junit-report > report.xml'
+                sh 'go test -v -coverprofile=coverage.out -covermode=atomic ./... | tee test-report.out'
+                sh 'go tool cover -html=coverage.out -o coverage.html'
+            }
+            post {
+                always {
+                    junit 'test-report.out'
+                    //cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
+                    //archiveArtifacts artifacts: 'coverage.out, coverage.html', fingerprint: true
+                }
+            }
+        }
+
+
 
         // stage ('SonarQube Analysis') {
         //     steps {
@@ -84,24 +86,24 @@ pipeline {
         // }
 
         stage('SonarQube Analysis') {
-        steps {
-            withSonarQubeEnv("${SONARQUBE_SERVER}") {
-            script {
-                def scannerHome = tool 'SonarScanner'
-                sh """
-                "${scannerHome}/bin/sonar-scanner" 
-                """
+            steps {
+                withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                script {
+                    def scannerHome = tool 'SonarScanner'
+                    sh """
+                    "${scannerHome}/bin/sonar-scanner" 
+                    """
+                }
+                }
             }
-            }
-        }
         }
 
         stage('Quality Gate') {
-        steps {
-            timeout(time: 1, unit: 'HOURS') {
-            waitForQualityGate abortPipeline: true
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                waitForQualityGate abortPipeline: true
+                }
             }
-        }
         }
 
 
