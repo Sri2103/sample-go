@@ -24,12 +24,12 @@ pipeline {
             }
 
             steps {
-                 sh 'golangci-lint run ./... --out-format checkstyle  > lint-report.xml || true'
+                 sh 'golangci-lint run ./... --out-format checkstyle  > golangci-lint-report.xml || true'
             }
 
             post {
                 always {
-                     recordIssues tools: [checkStyle(pattern: 'lint-report.xml')]
+                     recordIssues tools: [checkStyle(pattern: 'golangci-lint-report.xml')]
                 }
             }
 
