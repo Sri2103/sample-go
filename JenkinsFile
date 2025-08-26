@@ -67,21 +67,45 @@ pipeline {
 
         }
 
-        stage ('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('MySonarQube') {
-                    sh 'sonar-scanner'
-                }
+        // stage ('SonarQube Analysis') {
+        //     steps {
+        //         withSonarQubeEnv('MySonarQube') {
+        //             sh 'sonar-scanner'
+        //         }
+        //     }
+        // }
+
+        // stage ('Quality Gate') {
+        //     steps {
+        //         timeout(time:1, unit: 'HOURS') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
+
+        stage('SonarQube Analysis') {
+        steps {
+            withSonarQubeEnv("${SONARQUBE_SERVER}") {
+            script {
+                def scannerHome = tool 'SonarScanner'
+                sh """
+                "${scannerHome}/bin/sonar-scanner" \
+                    -Dsonar.projectKey=my-go-app \
+                    -Dsonar.projectName='My Go App'
+                """
             }
+            }
+        }
         }
 
-        stage ('Quality Gate') {
-            steps {
-                timeout(time:1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
-                }
+        stage('Quality Gate') {
+        steps {
+            timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
             }
         }
+        }
+
 
         stage('Build Docker Image') {
 
