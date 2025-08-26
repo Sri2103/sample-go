@@ -20,14 +20,27 @@ func currentHost() string {
 	return hostname
 }
 
-func getIpAdress() ([]net.Addr, error) {
+func getIpAdress() ([]string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		fmt.Printf("Error getting interface address: %v\n", err)
 		return nil, err
 	}
 
-	return addrs, nil
+	ip := []string{}
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil { // Check if it's an IPv4 address
+				fmt.Printf("  IPv4: %s\n", ipnet.IP.String())
+				ip = append(ip, ipnet.IP.String())
+			} else { // It's an IPv6 address
+				fmt.Printf("  IPv6: %s\n", ipnet.IP.String())
+				ip = append(ip, ipnet.IP.String())
+			}
+		}
+	}
+
+	return ip, nil
 }
 
 func GetHome(w http.ResponseWriter, r *http.Request) {

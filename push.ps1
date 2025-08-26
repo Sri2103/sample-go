@@ -3,7 +3,7 @@ param(
 )
 
 Write-Host "Pushing to GitHub..."
-# git push github $branch
+git push origin $branch
 
 Write-Host "Pushing to Gitea..."
 git push gitea $branch
