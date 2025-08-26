@@ -1,0 +1,15 @@
+git --managing repos
+
+Choose one “source of truth”
+
+Merge PRs only in one place (say GitHub).
+
+After merge, always git pull from that repo and git push to the other.
+
+Example:
+
+git checkout main
+git pull github main
+git push gitea main
+
+

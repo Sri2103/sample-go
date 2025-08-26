@@ -4,11 +4,18 @@ pipeline {
     environment {
         IMAGE_NAME = "my-go-app"
         HOME = "${WORKSPACE}"
+        SONARQUBE_SERVER = "MySonarQube"
     }
 
     stages {
-        stage('Go Build & Test') {
-            
+        
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Go Build & Test') {    
         agent {
           docker {
             image 'golang:1.23'
@@ -22,13 +29,65 @@ pipeline {
         }
             steps {
                 sh 'go version'
+                sh 'go install github.com/jstemmer/go-junit-report@latest'
+
                 sh 'go mod tidy'
-                sh 'go build -o myapp'   // local build for testing only
-                sh 'go test ./...'
+               // sh 'go build -o myapp'   // local build for testing only
+                // sh 'go test -v ./... | go-junit-report > report.xml'
+                sh 'go test -coverprofile=coverage.out ./... | go-junit-report > report.xml'
+                sh 'go tool cover -html=coverage.out -o coverage.html'
+            }
+            post {
+                always {
+                    junit 'report.xml'
+                    cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
+                    archiveArtifacts artifacts: 'coverage.out, coverage.html', fingerprint: true
+                }
+            }
+        }
+
+        stage('Lint') {
+            agent {
+                 docker {
+                    image 'golangci/golangci-lint:v1.63'
+                    args '-v $PWD:/app -w /app'
+                }
+            }
+
+            steps {
+                 sh 'golangci-lint run ./... --out-format checkstyle > lint-report.xml'
+            }
+
+            post {
+                always {
+                     recordIssues tools: [checkStyle(pattern: 'lint-report.xml')]
+                }
+            }
+
+
+        }
+
+        stage ('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('MySonarQube') {
+                    sh 'sonar-scanner'
+                }
+            }
+        }
+
+        stage ('Quality Gate') {
+            steps {
+                timeout(time:1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
 
         stage('Build Docker Image') {
+
+            when {
+                branch 'main'
+            }
       
             steps {
                 script {
@@ -41,6 +100,11 @@ pipeline {
         }
 
         stage('Deploy Locally') {
+
+            when {
+                branch 'main'
+            }
+
             steps {
                 sh 'docker rm -f my-go-app || true'
                 sh 'docker run -d -p 8500:8500 --name my-go-app my-go-app:latest'
