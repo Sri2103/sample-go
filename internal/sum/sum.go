@@ -1,8 +1,5 @@
 package sum
 
-
-func Addition(a,b int) int {
+func Addition(a, b int) int {
 	return a + b
 }
-
-
