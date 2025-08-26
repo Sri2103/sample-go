@@ -61,7 +61,7 @@ pipeline {
             post {
                 always {
                     junit 'report.xml'
-                    cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
+                   // cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
                     archiveArtifacts artifacts: 'coverage.out, coverage.html', fingerprint: true
                 }
             }
@@ -88,12 +88,14 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                script {
-                    def scannerHome = tool 'SonarScanner'
-                    sh """
-                    "${scannerHome}/bin/sonar-scanner" 
-                    """
-                }
+
+                    sh 'sonar-scanner'
+                // script {
+                //     def scannerHome = tool 'SonarScanner'
+                //     sh """
+                //     "${scannerHome}/bin/sonar-scanner" 
+                //     """
+                // }
                 }
             }
         }
