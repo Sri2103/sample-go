@@ -53,8 +53,6 @@ pipeline {
                 sh 'go install github.com/jstemmer/go-junit-report@latest'
 
                 sh 'go mod tidy'
-                // sh 'go build -o myapp'   // local build for testing only
-                // sh 'go test -v ./... | go-junit-report > report.xml'
                 sh 'go test -v -coverprofile="coverage.out" ./... | go-junit-report > report.xml'
                 sh 'go tool cover -html=coverage.out -o coverage.html'
             }
@@ -66,24 +64,6 @@ pipeline {
                 }
             }
         }
-
-
-
-        // stage ('SonarQube Analysis') {
-        //     steps {
-        //         withSonarQubeEnv('MySonarQube') {
-        //             sh 'sonar-scanner'
-        //         }
-        //     }
-        // }
-
-        // stage ('Quality Gate') {
-        //     steps {
-        //         timeout(time:1, unit: 'HOURS') {
-        //             waitForQualityGate abortPipeline: true
-        //         }
-        //     }
-        // }
 
    stage('SonarQube Analysis') {
             steps {
