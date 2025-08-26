@@ -48,7 +48,7 @@ func GetHome(w http.ResponseWriter, r *http.Request) {
 
 	ip, err := getIpAdress()
 	if err != nil {
-		http.Error(w, "Error finding the ip address", http.StatusInternalServerError)
+		http.Error(w, "Error in finding the ip address", http.StatusInternalServerError)
 	}
 
 	fmt.Fprintf(w, "host: %s, ip: %v", host, ip)
