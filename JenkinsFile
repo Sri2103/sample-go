@@ -12,8 +12,17 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout scm
+                script {
+                    def fullGitSha = env.GIT_COMMIT
+                    def shortGitSha = fullGitSha.substring(0,7)
+
+                    echo "short git sha:${shortGitSha}"
+
+                    env.SHORT_SHA = shortGitSha
+                }
             }
         }
+
 
         stage('Lint') {
             agent {
@@ -101,6 +110,7 @@ pipeline {
                 }
 
                 sh 'docker build -t ${IMAGE_NAME}:latest .'
+                sh 'docker '
             }
         }
 
