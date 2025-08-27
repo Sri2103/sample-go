@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestHandler(t *testing.T) {
+func TestGreet(t *testing.T) {
 	testCases := []struct {
 		name         string
 		url          string
@@ -18,7 +18,7 @@ func TestHandler(t *testing.T) {
 			name:         "Success",
 			url:          "/greet?name=Alice",
 			expectedCode: http.StatusOK,
-			expectedBody: "Hello Alice",
+			expectedBody: "Hello Alice!",
 		},
 	}
 
