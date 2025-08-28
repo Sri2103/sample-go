@@ -107,10 +107,16 @@ pipeline {
                 script {
                     // This Dockerfile does the real build (multi-stage)
                     docker.build("${IMAGE_NAME}:latest")
+                    
                 }
 
                 sh 'docker build -t ${IMAGE_NAME}:latest .'
-                sh 'docker '
+
+                sh 'docker tag ${IMAGE_NAME}:latest http://localhost:5000/${IMAGE_NAME}:${env.SHORT_SHA}'
+
+                sh 'docker push  http://localhost:5000/${IMAGE_NAME}:${env.SHORT_SHA}'
+
+                sh 'docker rmi  http://localhost:5000/${IMAGE_NAME}:${env.SHORT_SHA}'
             }
         }
 
