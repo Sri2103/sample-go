@@ -178,19 +178,38 @@ pipeline {
         
         }
 
-         stage('SCA Scan with govulncheck') {
-             agent {
-                docker {
-                image 'golang:1.24.3'
-                args '-v $PWD:/app -w /app'
-            }
-            }
+        //  stage('SCA Scan with govulncheck') {
+        //      agent {
+        //         docker {
+        //         image 'golang:1.24.3'
+        //         args '-v $PWD:/app -w /app'
+        //     }
+        //     }
+        //     steps {
+        //         // Run govulncheck and fail if vulnerable code is reachable
+        //         sh 'go install golang.org/x/vuln/cmd/govulncheck@latest'
+        //         sh 'govulncheck ./...'
+        //     }
+        // }
+
+        stage('SCA Scan with govulncheck') {
             steps {
-                // Run govulncheck and fail if vulnerable code is reachable
                 sh 'go install golang.org/x/vuln/cmd/govulncheck@latest'
-                sh 'govulncheck ./...'
+                sh 'govulncheck -format sarif -output govulncheck-report.sarif ./...'
+            }
+            post {
+                always {
+                    // Publish the SARIF report using the warnings-ng plugin
+                    recordIssues(
+                        tools: [sarif(pattern: 'govulncheck-report.sarif')],
+                        name: 'Go Vulnerability Scan'
+                    )
+                    // Archive the report as an artifact for easy download
+                    archiveArtifacts 'govulncheck-report.sarif'
+                }
             }
         }
+
     }
 }
 
