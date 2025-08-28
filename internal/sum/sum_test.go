@@ -24,3 +24,20 @@ func TestSum(t *testing.T) {
 		})
 	}
 }
+
+func TestSubtract(t *testing.T) {
+	tests := []struct {
+		name string
+		a, b int
+		want int
+	}{
+		{"Positive", 12, 6, 6},
+	}
+
+	for _, tt := range tests {
+		got := Subtract(tt.a, tt.b)
+		if got != tt.want {
+			t.Errorf("Subtract(%d,%d) = %d; want %d", tt.a, tt.b, got, tt.want)
+		}
+	}
+}
