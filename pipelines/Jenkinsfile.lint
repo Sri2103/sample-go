@@ -24,14 +24,16 @@ pipeline {
                 sh 'golangci-lint --version'
                 sh 'golangci-lint run ./... || true'
             }
-        }
 
-        post {
+            post {
                 always {
                      recordIssues tools: [checkStyle(pattern: 'golangci-lint-report.xml')]
                     // archiveArtifacts 'golangci-lint-report.xml'
                 }
+            }
         }
+
+
 
     }
 
