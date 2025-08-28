@@ -32,7 +32,7 @@ pipeline {
         stage('Lint') {
             agent {
                  docker {
-                    image 'golangci/golangci-lint:v1.63'
+                    image 'golangci/golangci-lint:v2.4.0'
                     args '-v $PWD:/app -w /app'
                 }
             }
