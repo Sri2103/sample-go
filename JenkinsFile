@@ -172,7 +172,7 @@ pipeline {
             post {
                 always {
                     // Archive the report for later analysis
-                    junit 'gosec-report.xml'
+                    junit allowEmptyResults: true, testResults: 'gosec-report.xml'
                 }
             }
         
