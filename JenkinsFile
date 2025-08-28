@@ -31,14 +31,17 @@ pipeline {
 
         stage('Lint') {
             agent {
-                 docker {
-                    image 'golangci/golangci-lint:v2.4.0'
-                    args '-v $PWD:/app -w /app'
+                docker {
+                image 'golang:1.23'
+                args '-v $PWD:/app -w /app'
                 }
+
             }
 
             steps {
-                 sh 'golangci-lint run ./... --out-format checkstyle  > golangci-lint-report.xml || true'
+                sh 'curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0'
+                sh 'golangci-lint --version'
+                sh 'golangci-lint run ./... --out-format checkstyle  > golangci-lint-report.xml || true'
             }
 
             post {
