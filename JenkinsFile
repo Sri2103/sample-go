@@ -112,14 +112,19 @@ pipeline {
 
                 // sh 'docker build -t ${IMAGE_NAME}:latest .'
 
-                sh 'docker tag ${IMAGE_NAME}:latest http://localhost:5000/${IMAGE_NAME}:${env.SHORT_SHA}'
+                script{
 
-                sh 'docker push  http://localhost:5000/${IMAGE_NAME}:${env.SHORT_SHA}'
+                    def sha = env.SHORT_SHA
+                    sh "docker tag ${IMAGE_NAME}:latest http://localhost:5000/${IMAGE_NAME}:${sha}"
+                }
+
+
+                sh "docker push  http://localhost:5000/${IMAGE_NAME}:${env.SHORT_SHA}"
 
                 script{
 
                     def sha = env.SHORT_SHA
-                     sh 'docker rmi  http://localhost:5000/${IMAGE_NAME}:${sha}'
+                     sh "docker rmi  http://localhost:5000/${IMAGE_NAME}:${sha}"
                 }
 
                
