@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Lint') {
+            steps {
+                build job: 'my-go-app-lint'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                build job: 'my-go-app-test'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                build job: 'my-go-app-sonar'
+            }
+        }
+
+        stage('Build Image') {
+            steps {
+                build job: 'my-go-app-build'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                build job: 'my-go-app-deploy'
+            }
+        }
+    }
+}

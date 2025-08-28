@@ -1,0 +1,26 @@
+pipeline {
+    agent any 
+
+    environment {
+        IMAGE_NAME  = "my-go-app"
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage('Deploy Locally') {
+             steps {
+                sh 'docker rm -f ${IMAGE_NAME} || true'
+                sh 'docker run -d -p 8500:8500 --name ${IMAGE_NAME} ${IMAGE_NAME}:latest'
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

@@ -1,0 +1,45 @@
+pipeline {
+    agnet any 
+
+    environment {
+        SONARQUBE_SERVER = "MySonarQube"
+    }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage ('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                script {
+                        def scannerHome = tool 'SonarScanner'
+                        sh """
+                        "${scannerHome}/bin/sonar-scanner" 
+                        """
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: false
+            // waitForQualityGate abortPipeline: true
+            }
+        }
+
+
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

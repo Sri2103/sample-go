@@ -1,0 +1,45 @@
+pipeline {
+    agent{
+        image 'golang:1.24'
+        args '-v $PWD:/app -w /app'
+    }
+
+    environment {
+        GOGACHE = "/tmp/go-cache"
+    }
+    options {
+        buiildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    stages {
+        stage ('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Test & Coverage') {
+           steps {
+                sh 'go version'
+                sh 'go install github.com/jstemmer/go-junit-report@latest'
+
+                sh 'go mod tidy'
+                sh 'go test -v -coverprofile=coverage.out ./... | go-junit-report > report.xml'
+                sh 'go tool cover -html=coverage.out -o coverage.html'
+            }
+            post {
+                always {
+                    junit 'report.xml'
+                   // cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
+                    archiveArtifacts artifacts: 'coverage.out, coverage.html, report.xml', fingerprint: true
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
