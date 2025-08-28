@@ -141,8 +141,6 @@ pipeline {
             }
         }
     }
-
-    stages {
         stage('SAST Scan with gosec') {
 
             agent {
@@ -165,6 +163,6 @@ pipeline {
                     junit 'gosec-report.xml'
                 }
             }
-        }
+        
     }
 }
