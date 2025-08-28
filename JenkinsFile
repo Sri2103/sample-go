@@ -110,8 +110,6 @@ pipeline {
                     
                 }
 
-                // sh 'docker build -t ${IMAGE_NAME}:latest .'
-
                 script{
 
                     def sha = env.SHORT_SHA
