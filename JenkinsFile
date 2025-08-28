@@ -74,59 +74,59 @@ pipeline {
             }
         }
 
-   stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                script {
-                    def scannerHome = tool 'SonarScanner'
-                    sh """
-                    "${scannerHome}/bin/sonar-scanner" 
-                    """
+                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                    script {
+                        def scannerHome = tool 'SonarScanner'
+                        sh """
+                        "${scannerHome}/bin/sonar-scanner" 
+                        """
+                    }
+                    }
                 }
-                }
-            }
         }
 
         stage('Quality Gate') {
-            steps {
-                timeout(time: 1, unit: 'HOURS') {
-                waitForQualityGate abortPipeline: false
-                // waitForQualityGate abortPipeline: true
+                steps {
+                    timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: false
+                    // waitForQualityGate abortPipeline: true
+                    }
                 }
-            }
         }
 
 
         stage('Build Docker Image') {
 
-            when {
-                branch 'main'
-            }
-      
-            steps {
-                script {
-                    // This Dockerfile does the real build (multi-stage)
-                    docker.build("${IMAGE_NAME}:latest")
-                    
+                when {
+                    branch 'main'
                 }
+        
+                steps {
+                    script {
+                        // This Dockerfile does the real build (multi-stage)
+                        docker.build("${IMAGE_NAME}:latest")
+                        
+                    }
 
-                script{
+                    script{
 
-                    def sha = env.SHORT_SHA
-                    sh "docker tag ${IMAGE_NAME}:latest localhost:5000/${IMAGE_NAME}:${sha}"
+                        def sha = env.SHORT_SHA
+                        sh "docker tag ${IMAGE_NAME}:latest localhost:5000/${IMAGE_NAME}:${sha}"
+                    }
+
+
+                    sh "docker push  localhost:5000/${IMAGE_NAME}:${env.SHORT_SHA}"
+
+                    script{
+
+                        def sha = env.SHORT_SHA
+                        sh "docker rmi  localhost:5000/${IMAGE_NAME}:${sha}"
+                    }
+
+                
                 }
-
-
-                sh "docker push  localhost:5000/${IMAGE_NAME}:${env.SHORT_SHA}"
-
-                script{
-
-                    def sha = env.SHORT_SHA
-                     sh "docker rmi  localhost:5000/${IMAGE_NAME}:${sha}"
-                }
-
-               
-            }
         }
 
         stage('Deploy Locally') {
@@ -138,6 +138,32 @@ pipeline {
             steps {
                 sh 'docker rm -f my-go-app || true'
                 sh 'docker run -d -p 8500:8500 --name my-go-app my-go-app:latest'
+            }
+        }
+    }
+
+    stages {
+        stage('SAST Scan with gosec') {
+
+            agent {
+                docker {
+                image 'golang:1.23'
+                args '-v $PWD:/app -w /app'
+                }
+
+            }
+
+            steps {
+                // Installs gosec if not already present
+                sh 'go install github.com/securego/gosec/v2/cmd/gosec@latest'
+                // Run gosec and fail the build if vulnerabilities are found
+                sh 'gosec -fmt=junit-xml -out=gosec-report.xml ./...'
+            }
+            post {
+                always {
+                    // Archive the report for later analysis
+                    junit 'gosec-report.xml'
+                }
             }
         }
     }
