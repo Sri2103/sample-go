@@ -79,34 +79,7 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
 
-
-                execute_stage('SonarQube Analysis', true){
-                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    script {
-                        def scannerHome = tool 'SonarScanner'
-                        sh """
-                        "${scannerHome}/bin/sonar-scanner" 
-                        """
-                    }
-                    }
-                }
-            } 
-        }
-
-        stage('Quality Gate') {
-                steps {
-
-                    execute_stage('Quality Gate',true) {
-                        timeout(time: 1, unit: 'HOURS') {
-                        waitForQualityGate abortPipeline: false
-                        // waitForQualityGate abortPipeline: true
-                        }
-                    }
-                }
-        }
 
 
         stage('Build Docker Image') {
@@ -219,7 +192,34 @@ pipeline {
         }
 
         
+        stage('SonarQube Analysis') {
+            steps {
 
+
+                execute_stage('SonarQube Analysis', false){
+                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                    script {
+                        def scannerHome = tool 'SonarScanner'
+                        sh """
+                        "${scannerHome}/bin/sonar-scanner" 
+                        """
+                    }
+                    }
+                }
+            } 
+        }
+
+        stage('Quality Gate') {
+                steps {
+
+                    execute_stage('Quality Gate',false) {
+                        timeout(time: 1, unit: 'HOURS') {
+                        waitForQualityGate abortPipeline: false
+                        // waitForQualityGate abortPipeline: true
+                        }
+                    }
+                }
+        }
     }
 }
 
