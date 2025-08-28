@@ -187,7 +187,7 @@ pipeline {
             }
             steps {
                 // Run govulncheck and fail if vulnerable code is reachable
-                
+                sh 'go install golang.org/x/vuln/cmd/govulncheck@latest'
                 sh 'govulncheck ./...'
             }
         }
