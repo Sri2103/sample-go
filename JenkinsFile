@@ -12,6 +12,16 @@ pipeline {
         booleanParam(name: 'sonar', defaultValue: false, description: 'Set to true to skip the test stage')
     }
 
+    options {
+        // Discard old builds
+        buildDiscarder(logRotator(
+            numToKeepStr: '10',          // keep last 10 builds
+            daysToKeepStr: '30',         // OR builds from last 30 days
+            artifactNumToKeepStr: '5',   // keep last 5 artifact sets
+            artifactDaysToKeepStr: '15'  // OR artifacts from last 15 days
+        ))
+    }
+
     stages {
         
         stage('Checkout') {
@@ -223,6 +233,12 @@ pipeline {
                         }
                     }
                 }
+        }
+    }
+
+    post{
+        always {
+            cleanup()
         }
     }
 }
