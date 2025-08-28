@@ -43,11 +43,8 @@ pipeline {
 
             post {
                 always {
-                     recordIssues (
-                        tools: [checkStyle(pattern: 'golangci-lint-report.xml')]
-                        name: "golang linting report"
-                    )
-                    archiveArtifacts 'golangci-lint-report.xml'
+                     recordIssues tools: [checkStyle(pattern: 'golangci-lint-report.xml')]
+                    // archiveArtifacts 'golangci-lint-report.xml'
                 }
             }
 
