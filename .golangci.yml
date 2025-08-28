@@ -26,3 +26,11 @@ formatters:
       - third_party$
       - builtin$
       - examples$
+
+output:
+  formats:
+    checkstyle:
+      path: "golangci-lint-report.xml"
+  path-mode: ""
+  path-prefix: ""
+  show-stats: true
