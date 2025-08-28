@@ -140,7 +140,7 @@ pipeline {
                 sh 'docker run -d -p 8500:8500 --name my-go-app my-go-app:latest'
             }
         }
-    }
+    
         stage('SAST Scan with gosec') {
 
             agent {
@@ -164,5 +164,6 @@ pipeline {
                 }
             }
         
+        }
     }
 }
