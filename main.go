@@ -12,6 +12,8 @@ func main() {
 	h := handlers.NewHandler()
 	mux := http.NewServeMux()
 
+	// comment to see the data for other
+
 	mux.HandleFunc("/", h.Dummy)
 
 	mux.HandleFunc("/ip", h.GetHome)
