@@ -137,36 +137,42 @@ pipeline {
                 KUSTOMIZE_FILE = "resources/kustomization.yaml"
             }
 
-            // steps {
-            //         dir('gitops-repo') {
-            //             // checkout([
-            //             //     $class: 'GitSCM',
-            //             //     branches: [[name: 'main']],
-            //             //     userRemoteConfigs: [[
-            //             //         url: 'http://host.docker.internal:3000/company/orchestration.git',
-            //             //         // credentialsId: 'git-credentials-id'
-            //             //     ]]
-            //             // ])
+            steps {
+                    dir('gitops-repo') {
+                        // checkout([
+                        //     $class: 'GitSCM',
+                        //     branches: [[name: 'main']],
+                        //     userRemoteConfigs: [[
+                        //         url: 'http://host.docker.internal:3000/company/orchestration.git',
+                        //         // credentialsId: 'git-credentials-id'
+                        //     ]]
+                        // ])
 
-            //             git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
+                        git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
 
-            //             sh "git checkout main"
+                        sh "git checkout main"
                         
-            //             // Now proceed with your sed and git commands
-            //             sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
-            //             // ... (commit and push steps)
-            //                 // Commit and push the changes
-            //             sh '''
-            //                 git config user.email "jenkins@example.com"
-            //                 git config user.name "Jenkins Automation"
-            //                 git add .
-            //                 git commit -m "Updated image tag via Jenkins pipeline"
-            //                 git remote -v
-            //                 git push -u origin main
-            //             '''
-            //         }
+                        // Now proceed with your sed and git commands
+                        sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
+                        // ... (commit and push steps)
+                            // Commit and push the changes
+                        sh '''
+                            git config user.email "jenkins@example.com"
+                            git config user.name "Jenkins Automation"
+                            git add .
+                            git commit -m "Updated image tag via Jenkins pipeline"
+                            git remote -v
+                        '''
+
+                        withCredentials([usernamePassword(credentialsId: 'gitea-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                            sh '''
+                                git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main
+                            '''
                         
-            // }
+                         }
+                    }
+                        
+            }
 
             // steps {
             //     // Use a credentials binding to securely expose the username and password variables.
@@ -194,51 +200,51 @@ pipeline {
             // }
     
 
-            stage {
+            // stage {
 
-                stages{
+            //     stages{
                     
-                dir('git-ops') {
+            //     dir('git-ops') {
                 
-                    steps {
-                        checkout([$class: 'GitSCM',
-                            branches: [[name: '*/main']],
-                            userRemoteConfigs: [[
-                                url: 'http://host.docker.internal:3000/company/orchestration.git',
-                                credentialsId: 'gitea-server'
-                            ]]
-                        ])
-                    }
-                }
+            //         steps {
+            //             checkout([$class: 'GitSCM',
+            //                 branches: [[name: '*/main']],
+            //                 userRemoteConfigs: [[
+            //                     url: 'http://host.docker.internal:3000/company/orchestration.git',
+            //                     credentialsId: 'gitea-server'
+            //                 ]]
+            //             ])
+            //         }
+            //     }
 
                
 
                 
-                    steps {
-                        script {
-                            sh '''
-                                echo "Build timestamp: $(date)" >> build.log
-                                sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
-                                git add .
+            //         steps {
+            //             script {
+            //                 sh '''
+            //                     echo "Build timestamp: $(date)" >> build.log
+            //                     sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
+            //                     git add .
 
-                                git commit -m "Add build log from Jenkins"
-                            '''
-                        }
-                    }
-                }
+            //                     git commit -m "Add build log from Jenkins"
+            //                 '''
+            //             }
+            //         }
+            //     }
 
                 
-                    steps {
-                        withCredentials([usernamePassword(credentialsId: 'gitea-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                            sh '''
-                                git config user.email "jenkins@gitea.local"
-                                git config user.name "Jenkins CI"
-                                git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main
-                            '''
+            //         steps {
+            //             withCredentials([usernamePassword(credentialsId: 'gitea-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+            //                 sh '''
+            //                     git config user.email "jenkins@gitea.local"
+            //                     git config user.name "Jenkins CI"
+            //                     git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main
+            //                 '''
                         
-                    }
-          }
-        }
+            //         }
+            //     }
+            // }
 
         }
 
