@@ -164,7 +164,7 @@ pipeline {
                             git remote -v
                         '''
 
-                        withCredentials([usernamePassword(credentialsId: 'gitea-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        withCredentials([usernamePassword(credentialsId: 'gitea-server', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                             sh '''
                                 git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main
                             '''
