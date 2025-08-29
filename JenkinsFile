@@ -164,7 +164,7 @@ pipeline {
                         git config user.name "Jenkins Automation"
                         git add .
                         git commit -m "Updated image tag to ${NEW_IMAGE_TAG}"
-                        git push gitea HEAD:main
+                        git push origin HEAD:main
                     '''
                 }
             }
