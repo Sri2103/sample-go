@@ -1,276 +1,509 @@
+// pipeline {
+//     agent any
+
+//     environment {
+//         IMAGE_NAME = "my-go-app"
+//         HOME = "${WORKSPACE}"
+//         SONARQUBE_SERVER = "MySonarQube"
+//     }
+
+//     parameters {
+//         booleanParam(name: 'skip_test', defaultValue: false, description: 'Set to true to skip the test stage')
+//         booleanParam(name: 'sonar', defaultValue: false, description: 'Set to true to skip the test stage')
+//     }
+
+//     options {
+//         // Discard old builds
+//         buildDiscarder(logRotator(
+//             numToKeepStr: '10',          // keep last 10 builds
+//             daysToKeepStr: '30',         // OR builds from last 30 days
+//             artifactNumToKeepStr: '5',   // keep last 5 artifact sets
+//             artifactDaysToKeepStr: '15'  // OR artifacts from last 15 days
+//         ))
+//     }
+
+//     stages {
+        
+//         stage('Checkout') {
+//             steps {
+//                 checkout scm
+//                 script {
+//                     def fullGitSha = env.GIT_COMMIT
+//                     def shortGitSha = fullGitSha.substring(0,7)
+
+//                     echo "short git sha:${shortGitSha}"
+
+//                     env.SHORT_SHA = shortGitSha
+//                 }
+//             }
+//         }
+
+
+//         stage('Lint') {
+//             agent {
+//                 docker {
+//                 image 'golang:1.23'
+//                 args '-v $PWD:/app -w /app'
+//                 }
+
+//             }
+
+//             steps {
+//                 sh 'curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0'
+//                 sh 'golangci-lint --version'
+//                 sh 'golangci-lint run ./... || true'
+//             }
+
+//             post {
+//                 always {
+//                      recordIssues tools: [checkStyle(pattern: 'golangci-lint-report.xml')]
+//                     // archiveArtifacts 'golangci-lint-report.xml'
+//                 }
+//             }
+
+
+//         }
+        
+//         stage('Go Build & Test') {    
+//             agent {
+//                 docker {
+//                 image 'golang:1.23'
+//                 args '-v $PWD:/app -w /app'
+//                 }
+
+//             }
+
+//             environment {
+//                 GOCACHE = '/tmp/go-cache'
+//             }
+//             steps {
+//                 sh 'go version'
+//                 sh 'go install github.com/jstemmer/go-junit-report@latest'
+
+//                 sh 'go mod tidy'
+//                 sh 'go test -v -coverprofile=coverage.out ./... | go-junit-report > report.xml'
+//                 sh 'go tool cover -html=coverage.out -o coverage.html'
+//             }
+//             post {
+//                 always {
+//                     junit 'report.xml'
+//                    // cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
+//                     archiveArtifacts artifacts: 'coverage.out, coverage.html, report.xml', fingerprint: true
+//                 }
+//             }
+//         }
+
+//         stage('Build Docker Image') {
+
+//                 when {
+//                     branch 'main'
+//                 }
+        
+//                 steps {
+//                     script {
+//                         // This Dockerfile does the real build (multi-stage)
+//                         docker.build("${IMAGE_NAME}:latest")
+                        
+//                     }
+
+//                     script{
+
+//                         def sha = env.SHORT_SHA
+//                         sh "docker tag ${IMAGE_NAME}:latest host.docker.internal:5000/${IMAGE_NAME}:${sha}"
+//                         sh "docker push  host.docker.internal:5000/${IMAGE_NAME}:${sha}"
+//                         sh "docker rmi  host.docker.internal:5000/${IMAGE_NAME}:${sha}"
+//                     } 
+                
+//                 }
+//         }
+
+//         stage('kubernetes Manifest building') {
+//             when {
+//                 branch 'main'
+//             }
+
+//             environment {
+//              // Assume you are using the build number as the image tag
+//                 NEW_IMAGE_TAG = "${SHORT_SHA}"
+//                 // Set the path to your kustomization file
+//                 KUSTOMIZE_FILE = "resources/kustomization.yaml"
+//             }
+
+//             steps {
+//                     dir('gitops-repo') {
+
+//                         git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
+
+//                         sh "git checkout main"
+                        
+//                         // Now proceed with your sed and git commands
+//                         // sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
+//                     //    sh  "sed -i -E 's/image: .*/image: host.docker.internal:5000/${IMAGE_NAME}:${NEW_IMAGE_TAG}/' overlays/dev/patch-deployment.yaml"
+//                         sh "sed -i -E \"s|image: .*|image: host.docker.internal:5000/${IMAGE_NAME}:${NEW_IMAGE_TAG}|\" overlays/dev/patch-deployment.yaml"
+
+                        
+//                         sh  "echo ${NEW_IMAGE_TAG} "
+
+//                         sh '''
+//                             git config user.email "jenkins@example.com"
+//                             git config user.name "Jenkins Automation"
+//                             git add .
+//                             git commit --allow-empty  -m "Updated image tag via Jenkins pipeline"
+//                             git remote -v
+//                         '''
+
+//                         withCredentials([usernamePassword(credentialsId: 'gitea-server', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+//                             sh '''
+//                                 git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main
+//                             '''
+                        
+//                          }
+//                     }
+                        
+//             }
+
+//         }
+
+//         stage('Deploy Locally') {
+
+//             when {
+//                 branch 'main'
+//             }
+
+//             steps {
+//                 sh 'docker rm -f my-go-app || true'
+//                 sh 'docker run -d -p 8500:8500 --name my-go-app my-go-app:latest'
+//             }
+//         }
+    
+//         stage('SAST Scan with gosec') {
+
+//             agent {
+//                 docker {
+//                 image 'golang:1.24.3'
+//                 args '-v $PWD:/app -w /app'
+//                 }
+
+//             }
+
+//             steps {
+//                 // Installs gosec if not already present
+//                 sh 'go install github.com/securego/gosec/v2/cmd/gosec@latest'
+//                 // Run gosec and fail the build if vulnerabilities are found
+//                 sh 'gosec -fmt=junit-xml -out=gosec-report.xml ./...'
+//             }
+//             post {
+//                 always {
+//                     // Archive the report for later analysis
+//                     junit allowEmptyResults: true, testResults: 'gosec-report.xml'
+//                 }
+//             }
+        
+//         }
+
+//         stage('SCA Scan with govulncheck') {
+
+//             agent {
+//                 docker {
+//                 image 'golang:1.24.3'
+//                 args '-v $PWD:/app -w /app'
+//                 }
+
+//             }
+//             steps {
+//                 sh 'go install golang.org/x/vuln/cmd/govulncheck@latest'
+//                 sh 'govulncheck -format sarif  ./... >  govulncheck-report.sarif'
+//             }
+//             post {
+//                 always {
+//                     // Publish the SARIF report using the warnings-ng plugin
+//                     recordIssues(
+//                         tools: [sarif(pattern: 'govulncheck-report.sarif')],
+//                         name: 'Go Vulnerability Scan'
+//                     )
+//                     // Archive the report as an artifact for easy download
+//                     archiveArtifacts 'govulncheck-report.sarif'
+//                 }
+//             }
+//         }
+
+        
+//         stage('SonarQube Analysis') {
+//             steps {
+
+
+//                 execute_stage('SonarQube Analysis', false){
+//                     withSonarQubeEnv("${SONARQUBE_SERVER}") {
+//                     script {
+//                         def scannerHome = tool 'SonarScanner'
+//                         sh """
+//                         "${scannerHome}/bin/sonar-scanner" 
+//                         """
+//                     }
+//                     }
+//                 }
+//             } 
+//         }
+
+//         stage('Quality Gate') {
+//                 steps {
+
+//                     execute_stage('Quality Gate',false) {
+//                         timeout(time: 1, unit: 'HOURS') {
+//                         waitForQualityGate abortPipeline: false
+//                         // waitForQualityGate abortPipeline: true
+//                         }
+//                     }
+//                 }
+//         }
+//     }
+
+//     post{
+//         always {
+//             cleanup()
+//         }
+//     }
+// }
+
+
+
+// def execute_stage(stage_name, skip, Closure steps) {
+//     if (skip) {
+//         echo "Skipping ${stage_name} stage"
+//     } else {
+//         steps.call()
+//     }
+// }
+
+
+
+
+
+
+
 pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "my-go-app"
-        HOME = "${WORKSPACE}"
+        IMAGE_NAME       = "my-go-app"
+        HOME             = "${WORKSPACE}"
         SONARQUBE_SERVER = "MySonarQube"
+        GOCACHE          = '/tmp/go-cache'
     }
 
     parameters {
-        booleanParam(name: 'skip_test', defaultValue: false, description: 'Set to true to skip the test stage')
-        booleanParam(name: 'sonar', defaultValue: false, description: 'Set to true to skip the test stage')
+        booleanParam(name: 'skip_test', defaultValue: false, description: 'Skip the test stage')
+        booleanParam(name: 'sonar', defaultValue: false, description: 'Run SonarQube analysis (main only)')
     }
 
     options {
-        // Discard old builds
         buildDiscarder(logRotator(
-            numToKeepStr: '10',          // keep last 10 builds
-            daysToKeepStr: '30',         // OR builds from last 30 days
-            artifactNumToKeepStr: '5',   // keep last 5 artifact sets
-            artifactDaysToKeepStr: '15'  // OR artifacts from last 15 days
+            numToKeepStr: '10',
+            daysToKeepStr: '30',
+            artifactNumToKeepStr: '5',
+            artifactDaysToKeepStr: '15'
         ))
     }
 
     stages {
-        
+
         stage('Checkout') {
             steps {
                 checkout scm
                 script {
-                    def fullGitSha = env.GIT_COMMIT
-                    def shortGitSha = fullGitSha.substring(0,7)
-
-                    echo "short git sha:${shortGitSha}"
-
-                    env.SHORT_SHA = shortGitSha
+                    env.SHORT_SHA = env.GIT_COMMIT.take(7)
+                    echo "short git sha: ${env.SHORT_SHA}"
                 }
             }
         }
-
 
         stage('Lint') {
             agent {
-                docker {
-                image 'golang:1.23'
-                args '-v $PWD:/app -w /app'
-                }
-
+                docker { image 'golang:1.23'; args '-v $PWD:/app -w /app' }
             }
-
             steps {
-                sh 'curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0'
-                sh 'golangci-lint --version'
-                sh 'golangci-lint run ./... || true'
+                sh '''
+                    curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.4.0
+                    golangci-lint run ./... || true
+                '''
             }
-
             post {
                 always {
-                     recordIssues tools: [checkStyle(pattern: 'golangci-lint-report.xml')]
-                    // archiveArtifacts 'golangci-lint-report.xml'
+                    recordIssues tools: [checkStyle(pattern: 'golangci-lint-report.xml')]
                 }
             }
-
-
         }
-        
-        stage('Go Build & Test') {    
+
+        stage('Go Build & Test') {
+            when { expression { !params.skip_test } }
             agent {
-                docker {
-                image 'golang:1.23'
-                args '-v $PWD:/app -w /app'
-                }
-
-            }
-
-            environment {
-                GOCACHE = '/tmp/go-cache'
+                docker { image 'golang:1.23'; args '-v $PWD:/app -w /app' }
             }
             steps {
-                sh 'go version'
-                sh 'go install github.com/jstemmer/go-junit-report@latest'
-
-                sh 'go mod tidy'
-                sh 'go test -v -coverprofile=coverage.out ./... | go-junit-report > report.xml'
-                sh 'go tool cover -html=coverage.out -o coverage.html'
+                sh '''
+                    go mod tidy
+                    go install github.com/jstemmer/go-junit-report@latest
+                    go test -v -coverprofile=coverage.out ./... | go-junit-report > report.xml
+                    go tool cover -html=coverage.out -o coverage.html
+                '''
             }
             post {
                 always {
                     junit 'report.xml'
-                   // cobertura coberturaReportFile: 'coverage.xml', autoUpdateHealth: false, autoUpdateStability: false
                     archiveArtifacts artifacts: 'coverage.out, coverage.html, report.xml', fingerprint: true
                 }
             }
         }
 
-        stage('Build Docker Image') {
-
-                when {
-                    branch 'main'
-                }
-        
-                steps {
-                    script {
-                        // This Dockerfile does the real build (multi-stage)
-                        docker.build("${IMAGE_NAME}:latest")
-                        
-                    }
-
-                    script{
-
-                        def sha = env.SHORT_SHA
-                        sh "docker tag ${IMAGE_NAME}:latest host.docker.internal:5000/${IMAGE_NAME}:${sha}"
-                        sh "docker push  host.docker.internal:5000/${IMAGE_NAME}:${sha}"
-                        sh "docker rmi  host.docker.internal:5000/${IMAGE_NAME}:${sha}"
-                    } 
-                
-                }
-        }
-
-        stage('kubernetes Manifest building') {
-            when {
-                branch 'main'
-            }
-
-            environment {
-             // Assume you are using the build number as the image tag
-                NEW_IMAGE_TAG = "${SHORT_SHA}"
-                // Set the path to your kustomization file
-                KUSTOMIZE_FILE = "resources/kustomization.yaml"
-            }
-
-            steps {
-                    dir('gitops-repo') {
-
-                        git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
-
-                        sh "git checkout main"
-                        
-                        // Now proceed with your sed and git commands
-                        // sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
-                    //    sh  "sed -i -E 's/image: .*/image: host.docker.internal:5000/${IMAGE_NAME}:${NEW_IMAGE_TAG}/' overlays/dev/patch-deployment.yaml"
-                        sh "sed -i -E \"s|image: .*|image: host.docker.internal:5000/${IMAGE_NAME}:${NEW_IMAGE_TAG}|\" overlays/dev/patch-deployment.yaml"
-
-                        
-                        sh  "echo ${NEW_IMAGE_TAG} "
-
-                        sh '''
-                            git config user.email "jenkins@example.com"
-                            git config user.name "Jenkins Automation"
-                            git add .
-                            git commit --allow-empty  -m "Updated image tag via Jenkins pipeline"
-                            git remote -v
-                        '''
-
-                        withCredentials([usernamePassword(credentialsId: 'gitea-server', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                            sh '''
-                                git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main
-                            '''
-                        
-                         }
-                    }
-                        
-            }
-
-        }
-
-        stage('Deploy Locally') {
-
-            when {
-                branch 'main'
-            }
-
-            steps {
-                sh 'docker rm -f my-go-app || true'
-                sh 'docker run -d -p 8500:8500 --name my-go-app my-go-app:latest'
-            }
-        }
-    
-        stage('SAST Scan with gosec') {
-
+        stage('SAST Scan (gosec)') {
             agent {
-                docker {
-                image 'golang:1.24.3'
-                args '-v $PWD:/app -w /app'
-                }
-
+                docker { image 'golang:1.24.3'; args '-v $PWD:/app -w /app' }
             }
-
             steps {
-                // Installs gosec if not already present
-                sh 'go install github.com/securego/gosec/v2/cmd/gosec@latest'
-                // Run gosec and fail the build if vulnerabilities are found
-                sh 'gosec -fmt=junit-xml -out=gosec-report.xml ./...'
+                script {
+                    if (env.BRANCH_NAME == 'main') {
+                        echo "Running blocking gosec scan (main branch)"
+                        sh '''
+                            go install github.com/securego/gosec/v2/cmd/gosec@latest
+                            gosec -fmt=junit-xml -out=gosec-report.xml ./...   # fails if issues found
+                        '''
+                    } else {
+                        echo "Running non-blocking gosec scan (dev branch)"
+                        sh '''
+                            go install github.com/securego/gosec/v2/cmd/gosec@latest
+                            gosec -fmt=junit-xml -out=gosec-report.xml ./... || true
+                        '''
+                    }
+                }
             }
             post {
                 always {
-                    // Archive the report for later analysis
                     junit allowEmptyResults: true, testResults: 'gosec-report.xml'
                 }
             }
-        
         }
 
-        stage('SCA Scan with govulncheck') {
-
+        stage('SCA Scan (govulncheck)') {
+            when { branch 'main' }
             agent {
-                docker {
-                image 'golang:1.24.3'
-                args '-v $PWD:/app -w /app'
-                }
-
+                docker { image 'golang:1.24.3'; args '-v $PWD:/app -w /app' }
             }
             steps {
-                sh 'go install golang.org/x/vuln/cmd/govulncheck@latest'
-                sh 'govulncheck -format sarif  ./... >  govulncheck-report.sarif'
+                sh '''
+                    go install golang.org/x/vuln/cmd/govulncheck@latest
+                    govulncheck -format sarif ./... > govulncheck-report.sarif
+                '''
             }
             post {
                 always {
-                    // Publish the SARIF report using the warnings-ng plugin
-                    recordIssues(
-                        tools: [sarif(pattern: 'govulncheck-report.sarif')],
-                        name: 'Go Vulnerability Scan'
-                    )
-                    // Archive the report as an artifact for easy download
+                    recordIssues(tools: [sarif(pattern: 'govulncheck-report.sarif')], name: 'Go Vulnerability Scan')
                     archiveArtifacts 'govulncheck-report.sarif'
                 }
             }
         }
 
-        
-        stage('SonarQube Analysis') {
+        stage('Build & Push Docker Image (Dev)') {
+            when { branch 'dev' }
             steps {
+                script {
+                    docker.build("${IMAGE_NAME}:dev-${SHORT_SHA}")
+                    sh """
+                        docker tag ${IMAGE_NAME}:dev-${SHORT_SHA} host.docker.internal:5000/${IMAGE_NAME}:dev-${SHORT_SHA}
+                        docker push host.docker.internal:5000/${IMAGE_NAME}:dev-${SHORT_SHA}
+                        docker rmi host.docker.internal:5000/${IMAGE_NAME}:dev-${SHORT_SHA}
+                    """
+                }
+            }
+        }
 
-
-                execute_stage('SonarQube Analysis', false){
-                    withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    script {
-                        def scannerHome = tool 'SonarScanner'
-                        sh """
-                        "${scannerHome}/bin/sonar-scanner" 
-                        """
-                    }
+        stage('GitOps Manifest Update (Dev)') {
+            when { branch 'dev' }
+            steps {
+                dir('gitops-repo') {
+                    git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
+                    sh """
+                        sed -i -E "s|image: .*|image: host.docker.internal:5000/${IMAGE_NAME}:dev-${SHORT_SHA}|" overlays/dev/patch-deployment.yaml
+                        git config user.email "jenkins@example.com"
+                        git config user.name "Jenkins Automation"
+                        git add overlays/dev/patch-deployment.yaml
+                        git commit --allow-empty -m "Updated dev image tag via Jenkins pipeline"
+                    """
+                    withCredentials([usernamePassword(credentialsId: 'gitea-server', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh 'git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main'
                     }
                 }
-            } 
+            }
+        }
+
+        stage('Build & Push Docker Image (Prod)') {
+            when { branch 'main' }
+            steps {
+                script {
+                    docker.build("${IMAGE_NAME}:prod-${SHORT_SHA}")
+                    sh """
+                        docker tag ${IMAGE_NAME}:prod-${SHORT_SHA} host.docker.internal:5000/${IMAGE_NAME}:prod-${SHORT_SHA}
+                        docker push host.docker.internal:5000/${IMAGE_NAME}:prod-${SHORT_SHA}
+                        docker rmi host.docker.internal:5000/${IMAGE_NAME}:prod-${SHORT_SHA}
+                    """
+                }
+            }
+        }
+
+        stage('GitOps Manifest Update (Prod)') {
+            when { branch 'main' }
+            steps {
+                dir('gitops-repo') {
+                    git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
+                    sh """
+                        sed -i -E "s|image: .*|image: host.docker.internal:5000/${IMAGE_NAME}:prod-${SHORT_SHA}|" overlays/prod/patch-deployment.yaml
+                        git config user.email "jenkins@example.com"
+                        git config user.name "Jenkins Automation"
+                        git add overlays/prod/patch-deployment.yaml
+                        git commit --allow-empty -m "Updated prod image tag via Jenkins pipeline"
+                    """
+                    withCredentials([usernamePassword(credentialsId: 'gitea-server', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh 'git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main'
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Locally') {
+            when { branch 'main' }
+            steps {
+                sh '''
+                    docker rm -f my-go-app || true
+                    docker run -d -p 8500:8500 --name my-go-app my-go-app:latest
+                '''
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            when { expression { params.sonar && env.BRANCH_NAME == 'main' } }
+            steps {
+                withSonarQubeEnv("${SONARQUBE_SERVER}") {
+                    script {
+                        def scannerHome = tool 'SonarScanner'
+                        sh "\"${scannerHome}/bin/sonar-scanner\""
+                    }
+                }
+            }
         }
 
         stage('Quality Gate') {
-                steps {
-
-                    execute_stage('Quality Gate',false) {
-                        timeout(time: 1, unit: 'HOURS') {
-                        waitForQualityGate abortPipeline: false
-                        // waitForQualityGate abortPipeline: true
-                        }
-                    }
+            when { branch 'main' }
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: false
                 }
+            }
         }
     }
 
-    post{
+    post {
         always {
-            cleanup()
+            echo "Cleaning up workspace"
+            cleanWs()
         }
-    }
-}
-
-
-
-def execute_stage(stage_name, skip, Closure steps) {
-    if (skip) {
-        echo "Skipping ${stage_name} stage"
-    } else {
-        steps.call()
     }
 }
