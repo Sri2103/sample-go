@@ -110,17 +110,9 @@ pipeline {
 
                         def sha = env.SHORT_SHA
                         sh "docker tag ${IMAGE_NAME}:latest localhost:5500/${IMAGE_NAME}:${sha}"
-                    }
-
-
-                    sh "docker push  localhost:5500/${IMAGE_NAME}:${env.SHORT_SHA}"
-
-                    script{
-
-                        def sha = env.SHORT_SHA
+                        sh "docker push  localhost:5500/${IMAGE_NAME}:${sha}"
                         sh "docker rmi  localhost:5500/${IMAGE_NAME}:${sha}"
-                    }
-
+                    } 
                 
                 }
         }
@@ -163,78 +155,6 @@ pipeline {
                     }
                         
             }
-
-            // steps {
-            //     // Use a credentials binding to securely expose the username and password variables.
-            //     withCredentials([usernamePassword(credentialsId: 'gitea-server', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
-            //         // Switch to the subdirectory for GitOps manifests
-            //         dir('gitops-repo') {
-            //             // Clone the repository with credentials
-            //             git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
-
-            //             // Update the kustomization.yaml file with the new image tag
-            //             sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
-                        
-            //             // Commit and push the changes
-            //             sh '''
-            //                 git config user.email "jenkins@example.com"
-            //                 git config user.name "Jenkins Automation"
-            //                 git add .
-            //                 git commit -m "Updated image tag via Jenkins pipeline"
-                            
-            //                 # Use git push with the credentials directly, and make sure to use single quotes or withEnv to avoid interpolation
-            //                 git -c http.extraheader="Authorization: Basic $(echo -n ${GIT_USERNAME}:${GIT_PASSWORD} | base64)" push origin main
-            //             '''
-            //         }
-            //     }
-            // }
-    
-
-            // stage {
-
-            //     stages{
-                    
-            //     dir('git-ops') {
-                
-            //         steps {
-            //             checkout([$class: 'GitSCM',
-            //                 branches: [[name: '*/main']],
-            //                 userRemoteConfigs: [[
-            //                     url: 'http://host.docker.internal:3000/company/orchestration.git',
-            //                     credentialsId: 'gitea-server'
-            //                 ]]
-            //             ])
-            //         }
-            //     }
-
-               
-
-                
-            //         steps {
-            //             script {
-            //                 sh '''
-            //                     echo "Build timestamp: $(date)" >> build.log
-            //                     sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
-            //                     git add .
-
-            //                     git commit -m "Add build log from Jenkins"
-            //                 '''
-            //             }
-            //         }
-            //     }
-
-                
-            //         steps {
-            //             withCredentials([usernamePassword(credentialsId: 'gitea-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-            //                 sh '''
-            //                     git config user.email "jenkins@gitea.local"
-            //                     git config user.name "Jenkins CI"
-            //                     git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main
-            //                 '''
-                        
-            //         }
-            //     }
-            // }
 
         }
 
