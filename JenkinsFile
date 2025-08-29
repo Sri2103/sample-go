@@ -162,8 +162,7 @@ pipeline {
                             git add .
                             git commit -m "Updated image tag via Jenkins pipeline"
                             git remote -v
-                            git remote add origin main  http://host.docker.internal:3000/company/orchestration.git
-                            git push origin HEAD:main
+                            git push  -u origin main
                         '''
                     }
                         
