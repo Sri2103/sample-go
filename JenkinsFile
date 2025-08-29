@@ -196,7 +196,10 @@ pipeline {
 
             
 
-            stages {
+            stage {
+
+                stages{
+                    
                 dir('git-ops') {
                 stage('Clone Repo') {
                     steps {
@@ -238,6 +241,7 @@ pipeline {
                     }
                 }
             }
+          }
         }
 
         }
