@@ -1,5 +1,5 @@
 $containerName = "registry"
-$exportPort = 5500
+$exportPort = 5000
 
 
 $exists = docker ps -a --format "{{.Names}}" | Select-String $containerName
