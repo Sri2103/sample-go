@@ -139,14 +139,18 @@ pipeline {
 
             steps {
                     dir('gitops-repo') {
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: 'main']],
-                            userRemoteConfigs: [[
-                                url: 'http://host.docker.internal:3000/company/orchestration.git',
-                                // credentialsId: 'git-credentials-id'
-                            ]]
-                        ])
+                        // checkout([
+                        //     $class: 'GitSCM',
+                        //     branches: [[name: 'main']],
+                        //     userRemoteConfigs: [[
+                        //         url: 'http://host.docker.internal:3000/company/orchestration.git',
+                        //         // credentialsId: 'git-credentials-id'
+                        //     ]]
+                        // ])
+
+                        sh "git pull http://host.docker.internal:3000/company/orchestration.git ."
+
+                        sh "git checkout main"
                         
                         // Now proceed with your sed and git commands
                         sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' kustomize/kustomization.yaml"
