@@ -153,7 +153,7 @@ pipeline {
                         sh "git checkout main"
                         
                         // Now proceed with your sed and git commands
-                        sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' kustomize/kustomization.yaml"
+                        sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
                         // ... (commit and push steps)
                             // Commit and push the changes
                         sh '''
