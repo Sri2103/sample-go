@@ -18,6 +18,8 @@ func main() {
 
 	mux.HandleFunc("/greet", h.Greet)
 
+	mux.HandleFunc("/healthz", h.Healthz)
+
 	server := &http.Server{
 		Addr:              ":8500",
 		Handler:           mux,
