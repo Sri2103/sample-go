@@ -138,7 +138,7 @@ pipeline {
                         
                         // Now proceed with your sed and git commands
                         // sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
-                        sed -i -E '"s/newTag: .*/newTag: ${NEW_IMAGE_TAG}/" resources/kustomization.yaml'
+                       sh  'sed -i -E "s/newTag: .*/newTag: ${NEW_IMAGE_TAG}/" resources/kustomization.yaml'
 
                         
                         sh  "echo ${NEW_IMAGE_TAG} "
@@ -201,20 +201,6 @@ pipeline {
             }
         
         }
-
-        //  stage('SCA Scan with govulncheck') {
-        //      agent {
-        //         docker {
-        //         image 'golang:1.24.3'
-        //         args '-v $PWD:/app -w /app'
-        //     }
-        //     }
-        //     steps {
-        //         // Run govulncheck and fail if vulnerable code is reachable
-        //         sh 'go install golang.org/x/vuln/cmd/govulncheck@latest'
-        //         sh 'govulncheck ./...'
-        //     }
-        // }
 
         stage('SCA Scan with govulncheck') {
 
