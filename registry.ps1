@@ -1,5 +1,5 @@
 $containerName = "registry"
-$exportPort = 5000
+$exportPort = 5500
 
 
 $exists = docker ps -a --format "{{.Names}}" | Select-String $containerName
@@ -22,4 +22,4 @@ docker run -d `
 
 Write-Host "registry is starting ...."
 
-Write-Host "User http://localhost:5000 as based of the image repo"
+Write-Host "User http://localhost:8500 as based of the image repo"

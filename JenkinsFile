@@ -109,16 +109,16 @@ pipeline {
                     script{
 
                         def sha = env.SHORT_SHA
-                        sh "docker tag ${IMAGE_NAME}:latest localhost:5000/${IMAGE_NAME}:${sha}"
+                        sh "docker tag ${IMAGE_NAME}:latest localhost:5500/${IMAGE_NAME}:${sha}"
                     }
 
 
-                    sh "docker push  localhost:5000/${IMAGE_NAME}:${env.SHORT_SHA}"
+                    sh "docker push  localhost:5500/${IMAGE_NAME}:${env.SHORT_SHA}"
 
                     script{
 
                         def sha = env.SHORT_SHA
-                        sh "docker rmi  localhost:5000/${IMAGE_NAME}:${sha}"
+                        sh "docker rmi  localhost:5500/${IMAGE_NAME}:${sha}"
                     }
 
                 
