@@ -132,21 +132,13 @@ pipeline {
 
             environment {
              // Assume you are using the build number as the image tag
-                NEW_IMAGE_TAG = "build-${BUILD_NUMBER}"
+                NEW_IMAGE_TAG = ${SHORT_SHA}
                 // Set the path to your kustomization file
                 KUSTOMIZE_FILE = "resources/kustomization.yaml"
             }
 
             steps {
                     dir('gitops-repo') {
-                        // checkout([
-                        //     $class: 'GitSCM',
-                        //     branches: [[name: 'main']],
-                        //     userRemoteConfigs: [[
-                        //         url: 'http://host.docker.internal:3000/company/orchestration.git',
-                        //         // credentialsId: 'git-credentials-id'
-                        //     ]]
-                        // ])
 
                         git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
 
@@ -154,8 +146,6 @@ pipeline {
                         
                         // Now proceed with your sed and git commands
                         sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
-                        // ... (commit and push steps)
-                            // Commit and push the changes
                         sh '''
                             git config user.email "jenkins@example.com"
                             git config user.name "Jenkins Automation"
