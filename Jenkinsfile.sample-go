@@ -138,7 +138,7 @@ pipeline {
                         
                         // Now proceed with your sed and git commands
                         // sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
-                       sh  'sed -i -E "s/image: .*/image: localhost:5000/${IMAGE_NAME}:${NEW_IMAGE_TAG}/" overlays/dev/patch-deployment.yaml'
+                       sh  "sed -i -E 's/image: .*/image: localhost:5000/${IMAGE_NAME}:${NEW_IMAGE_TAG}/' overlays/dev/patch-deployment.yaml"
 
                         
                         sh  "echo ${NEW_IMAGE_TAG} "
