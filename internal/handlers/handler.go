@@ -73,5 +73,5 @@ func (h *Handler) Dummy(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) Healthz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
-	w.Write([]byte("Healthy"))
+	w.Write([]byte("Healthy-1"))
 }
