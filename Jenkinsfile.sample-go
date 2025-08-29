@@ -124,7 +124,7 @@ pipeline {
 
             environment {
              // Assume you are using the build number as the image tag
-                NEW_IMAGE_TAG = ${SHORT_SHA}
+                NEW_IMAGE_TAG = "${SHORT_SHA}"
                 // Set the path to your kustomization file
                 KUSTOMIZE_FILE = "resources/kustomization.yaml"
             }
