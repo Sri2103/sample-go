@@ -192,16 +192,14 @@ pipeline {
             //         }
             //     }
             // }
-
-
-            
+    
 
             stage {
 
                 stages{
                     
                 dir('git-ops') {
-                stage('Clone Repo') {
+                
                     steps {
                         checkout([$class: 'GitSCM',
                             branches: [[name: '*/main']],
@@ -213,9 +211,9 @@ pipeline {
                     }
                 }
 
-                dir("")
+               
 
-                stage('Make Change') {
+                
                     steps {
                         script {
                             sh '''
@@ -229,7 +227,7 @@ pipeline {
                     }
                 }
 
-                stage('Push to Gitea') {
+                
                     steps {
                         withCredentials([usernamePassword(credentialsId: 'gitea-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
                             sh '''
@@ -237,10 +235,8 @@ pipeline {
                                 git config user.name "Jenkins CI"
                                 git push http://$GIT_USER:$GIT_PASS@host.docker.internal:3000/company/orchestration.git HEAD:main
                             '''
-                        }
+                        
                     }
-                }
-            }
           }
         }
 
