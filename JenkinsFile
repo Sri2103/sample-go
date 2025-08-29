@@ -137,36 +137,68 @@ pipeline {
                 KUSTOMIZE_FILE = "resources/kustomization.yaml"
             }
 
-            steps {
-                    dir('gitops-repo') {
-                        // checkout([
-                        //     $class: 'GitSCM',
-                        //     branches: [[name: 'main']],
-                        //     userRemoteConfigs: [[
-                        //         url: 'http://host.docker.internal:3000/company/orchestration.git',
-                        //         // credentialsId: 'git-credentials-id'
-                        //     ]]
-                        // ])
+            // steps {
+            //         dir('gitops-repo') {
+            //             // checkout([
+            //             //     $class: 'GitSCM',
+            //             //     branches: [[name: 'main']],
+            //             //     userRemoteConfigs: [[
+            //             //         url: 'http://host.docker.internal:3000/company/orchestration.git',
+            //             //         // credentialsId: 'git-credentials-id'
+            //             //     ]]
+            //             // ])
 
+            //             git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
+
+            //             sh "git checkout main"
+                        
+            //             // Now proceed with your sed and git commands
+            //             sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
+            //             // ... (commit and push steps)
+            //                 // Commit and push the changes
+            //             sh '''
+            //                 git config user.email "jenkins@example.com"
+            //                 git config user.name "Jenkins Automation"
+            //                 git add .
+            //                 git commit -m "Updated image tag via Jenkins pipeline"
+            //                 git remote -v
+            //                 git push  -u origin main
+            //             '''
+            //         }
+                        
+            // }
+
+            steps {
+                // Use a credentials binding to securely expose the username and password variables.
+                withCredentials([usernamePassword(credentialsId: 'gitea-server', usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                    // Switch to the subdirectory for GitOps manifests
+                    dir('gitops-repo') {
+                        // Clone the repository with credentials
                         git branch: 'main', credentialsId: 'gitea-server', url: 'http://host.docker.internal:3000/company/orchestration.git'
 
-                        sh "git checkout main"
-                        
-                        // Now proceed with your sed and git commands
+                        // Update the kustomization.yaml file with the new image tag
                         sh "sed -i 's#IMAGE_TAG_PLACEHOLDER#${NEW_IMAGE_TAG}#g' resources/kustomization.yaml"
-                        // ... (commit and push steps)
-                            // Commit and push the changes
-                        sh '''
+                        
+                        // Commit and push the changes
+                        sh """
                             git config user.email "jenkins@example.com"
                             git config user.name "Jenkins Automation"
                             git add .
                             git commit -m "Updated image tag via Jenkins pipeline"
-                            git remote -v
-                            git push  -u origin main
-                        '''
+                            
+                            // Reconfigure the remote URL to use the injected credentials for the push
+                            git remote set-url origin http://${GIT_USERNAME}:${GIT_PASSWORD}@host.docker.internal:3000/company/orchestration.git
+                            
+                            git push origin main
+                        """
                     }
-                        
+                }
             }
+
+
+
+
+
         }
 
         stage('Deploy Locally') {
